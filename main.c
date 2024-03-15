@@ -84,14 +84,15 @@ double to_double(char *buf) {
 	
 	return i * place;
 }
+
 // Parse command line and generate image
 int main(int argc, char** argv) {
-	if (argc < 5) {
-		printf("%s [width] [height] [scale] [output file]\n",argv[0]);
+	if (argc < 6) {
+		printf("%s [width] [height] [scale] [seed] [output file]\n",argv[0]);
 		return 1;
 	}
 
-	int width = to_int(argv[1]), height = to_int(argv[2]);
+	int width = to_int(argv[1]), height = to_int(argv[2]), seed = to_int(argv[4]);
 	double scale = to_double(argv[3]);
 	unsigned char *data = malloc(width*height*4);
 
@@ -101,10 +102,10 @@ int main(int argc, char** argv) {
 
 			double x = i / 3000.0 * scale, y = j / 3000.0 * scale;
 
-			double val = monti_height(x,y,18,10);
+			double val = monti_height(x,y,18,seed);
 			int isRiver = 0;
 			if (val > 0.58) {
-				double river = monti_river(x,y,18,10);
+				double river = monti_river(x,y,18,seed);
 				val = val - 0.2 + 0.2 * river;
 				isRiver = river < 0.85;
 			}
@@ -115,7 +116,7 @@ int main(int argc, char** argv) {
 			data[c+2] = ((val > 0.6 && !isRiver) ? 0 : 255) * 0.3 + val * 255 * 0.7;
 			data[c+3] = 255;
 
-			double dec = (((int) (val * 256.0)) % 2 == 0) ? 0.9 : 1.0;
+			double dec = (((int) (val * 256.0)) % 2) ? 1.0 : 0.9;
 
 			data[c] *= dec;
 			data[c+1] *= dec;
@@ -124,7 +125,7 @@ int main(int argc, char** argv) {
 		printf("rendered %i / %i\n",i,height);
 	}
 
-	stbi_write_png(argv[4],width,height,4,data,width*4);
+	stbi_write_png(argv[5],width,height,4,data,width*4);
 
 	free(data);
 }
