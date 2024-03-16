@@ -87,15 +87,17 @@ double to_double(char *buf) {
 
 // Parse command line and generate image
 int main(int argc, char** argv) {
-	if (argc < 6) {
-		printf("%s [width] [height] [scale] [seed] [output file]\n",argv[0]);
+	if (argc < 7) {
+		printf("%s [width] [height] [scale] [seed] [mode] [output file]\n",argv[0]);
 		return 1;
 	}
 
-	int width = to_int(argv[1]), height = to_int(argv[2]), seed = to_int(argv[4]);
+	int width = to_int(argv[1]), height = to_int(argv[2]), 
+		seed = to_int(argv[4]), mode = to_int(argv[5]);
 	double scale = to_double(argv[3]);
 	unsigned char *data = malloc(width*height*4);
 
+	// This will probably need to be refactored soon.
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			int c = i*width*4 + j*4;
@@ -110,11 +112,23 @@ int main(int argc, char** argv) {
 				isRiver = river < 0.85;
 			}
 			if (val > 0.99) val = 0.99;
+
+			data[c+3] = 255;
 	
+			if (mode == 1) {
+				data[c] = val * 255;
+
+				// Biome
+				data[c+1] |= (!isRiver && val > 0.6) << 7;
+				data[c+1] |= (isRiver && val > 0.6) << 6;
+				data[c+1] |= (!isRiver && val > 0.6 && val < 0.64) << 5;
+
+				continue;
+			}
+
 			data[c] = (val > 0.6 && val < 0.64 && !isRiver) ? 255 : val;
 			data[c+1] = ((val > 0.6 && !isRiver) ? 255 : 0) * 0.7 + val * 255 * 0.3;
 			data[c+2] = ((val > 0.6 && !isRiver) ? 0 : 255) * 0.3 + val * 255 * 0.7;
-			data[c+3] = 255;
 
 			double dec = (((int) (val * 256.0)) % 2) ? 1.0 : 0.9;
 
@@ -125,7 +139,7 @@ int main(int argc, char** argv) {
 		printf("rendered %i / %i\n",i,height);
 	}
 
-	stbi_write_png(argv[5],width,height,4,data,width*4);
+	stbi_write_png(argv[6],width,height,4,data,width*4);
 
 	free(data);
 }
