@@ -1,2 +1,2 @@
 make: 
-	gcc -lm -o ./noise.out *.c
+	gcc -lm $(shell pkg-config --cflags --libs gtk4) -o ./noise.out *.c
